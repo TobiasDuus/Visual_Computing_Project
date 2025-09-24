@@ -32,6 +32,7 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	std::vector<int> matchDistances;
 	cv::Ptr<cv::BFMatcher> bf = cv::BFMatcher::create();
 	bf->match(descriptor1, descriptor2, unprunedMatches);
+
 	//TODO
 	//std::sort(unprunedMatches.begin(), unprunedMatches.end(), comp);
 	for (int i = 0; i < unprunedMatches.size() - 1; i++) {
@@ -56,12 +57,17 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	std::vector<cv::Point2f> dstPts;
 
 	for (cv::DMatch match : matches) {
-		srcPts.push_back(keypoints1.at(match.imgIdx).pt);
+		srcPts.push_back(keypoints1.at(match.queryIdx).pt);
 		dstPts.push_back(keypoints2.at(match.trainIdx).pt);
 	}
 
 	cv::Mat mask;
-	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 3);
+	cv::Mat homography = cv::findHomography(srcPts, dstPts, cv::RANSAC, 3, mask, 2000, 0.995);
+	cv::Mat warpedImg;
+	cv::warpPerspective(img2, warpedImg, homography, cv::Size(img1.cols + img2.cols, img1.rows));
+	cv::imshow("sift-warped-img", warpedImg);
+	std::cout << "HOMOGRAPHY: " << srcPts << std::endl;
+
 }
 
 void orbFeatures(cv::Mat img1, cv::Mat img2) {
@@ -114,13 +120,19 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 	std::vector<cv::Point2f> dstPts;
 
 	for (cv::DMatch match : matches) {
-		srcPts.push_back(keypoints1.at(match.imgIdx).pt);
+		srcPts.push_back(keypoints1.at(match.queryIdx).pt);
 		dstPts.push_back(keypoints2.at(match.trainIdx).pt);
 	}
 
 	cv::Mat mask;
 	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 3);
 	
+	cv::Mat warpedImg;
+	cv::warpPerspective(img2, warpedImg, homography, cv::Size(img1.cols + img2.cols, img1.rows));
+	cv::imshow("orb-warped-img", warpedImg);
+
+	std::cout << "HOMOGRAPHY: " << homography << std::endl;	
+	std::cout << "Mask: " << mask << std::endl;
 }
 
 
