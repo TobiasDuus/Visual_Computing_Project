@@ -52,7 +52,6 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	std::cout << "Number of matches: " << matches.size() << std::endl;
 	
 	//HOMOGRAPHY
-	//HOMOGRAPHY
 	std::vector<cv::Point2f> srcPts;
 	std::vector<cv::Point2f> dstPts;
 
@@ -62,12 +61,27 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	}
 
 	cv::Mat mask;
-	cv::Mat homography = cv::findHomography(srcPts, dstPts, cv::RANSAC, 3, mask, 2000, 0.995);
+	cv::Mat homography = cv::findHomography(srcPts, dstPts, cv::RANSAC, 100, mask, 2000, 0.995);
 	cv::Mat warpedImg;
-	cv::warpPerspective(img2, warpedImg, homography, cv::Size(img1.cols + img2.cols, img1.rows));
+	cv::warpPerspective(
+		img2, 
+		warpedImg, 
+		homography, 
+		cv::Size(img1.cols + img2.cols, img1.rows),
+		cv::WARP_INVERSE_MAP,
+		cv::BORDER_CONSTANT,
+		cv::Scalar());
 	cv::imshow("sift-warped-img", warpedImg);
-	std::cout << "HOMOGRAPHY: " << srcPts << std::endl;
-
+	
+	cv::Mat stitchedImg = warpedImg;
+	for (int i = 0; i < img1.rows; i++) {
+		for (int j = 0; j < img1.cols; j++) {
+			if (stitchedImg.at<uchar>(i, j) == 0) {
+				stitchedImg.at<uchar>(i, j) = img1.at<uchar>(i, j);
+			}
+		}
+	}
+	cv::imshow("sift-stitched-img", stitchedImg);
 }
 
 void orbFeatures(cv::Mat img1, cv::Mat img2) {
@@ -128,22 +142,37 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 3);
 	
 	cv::Mat warpedImg;
-	cv::warpPerspective(img2, warpedImg, homography, cv::Size(img1.cols + img2.cols, img1.rows));
+	cv::warpPerspective(img2, 
+		warpedImg, 
+		homography, 
+		cv::Size(img1.cols + img2.cols, img1.rows), 
+		cv::WARP_INVERSE_MAP,
+		cv::BORDER_CONSTANT,
+		cv::Scalar());
 	cv::imshow("orb-warped-img", warpedImg);
 
-	std::cout << "HOMOGRAPHY: " << homography << std::endl;	
-	std::cout << "Mask: " << mask << std::endl;
+	cv::Mat stitchedImg = warpedImg;
+	for(int i = 0; i < img1.rows; i++) {
+		for(int j = 0; j < img1.cols; j++) {
+			if(stitchedImg.at<uchar>(i,j) == 0) {
+				stitchedImg.at<uchar>(i,j) = img1.at<uchar>(i,j);
+			}
+		}
+	}
+	cv::imshow("orb-stitched-img", stitchedImg);
+
 }
 
 
 int main() {
-	cv::Mat img1 = cv::imread("C:/Users/tobia/Desktop/Visual-Computing/project_2/images/volleyball-left.jpg", cv::IMREAD_GRAYSCALE);
-	cv::Mat resizedImg1;
-	cv::resize(img1, resizedImg1, cv::Size(800 * img1.cols / img1.rows, 800));
+	cv::Mat img1 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/volleyball-left.jpg", cv::IMREAD_GRAYSCALE);
+	cv::Mat img2 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/volleyball-right.jpg", cv::IMREAD_GRAYSCALE);
 
-	cv::Mat img2 = cv::imread("C:/Users/tobia/Desktop/Visual-Computing/project_2/images/volleyball-right.jpg", cv::IMREAD_GRAYSCALE);
+	cv::Mat resizedImg1;
+	cv::resize(img1, resizedImg1, cv::Size(500 * img1.cols / img1.rows, 500));
+
 	cv::Mat resizedImg2;
-	cv::resize(img2, resizedImg2, cv::Size(800 * img2.cols / img2.rows, 800));
+	cv::resize(img2, resizedImg2, cv::Size(500 * img2.cols / img2.rows, 500));
 	
 	siftFeatures(resizedImg1, resizedImg2);
 	orbFeatures(resizedImg1, resizedImg2);
