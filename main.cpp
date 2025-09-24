@@ -51,12 +51,13 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	std::cout << "Number of matches: " << matches.size() << std::endl;
 	
 	//HOMOGRAPHY
-	std::vector<int> srcPts;
-	std::vector<int> dstPts;
+	//HOMOGRAPHY
+	std::vector<cv::Point2f> srcPts;
+	std::vector<cv::Point2f> dstPts;
 
 	for (cv::DMatch match : matches) {
-		srcPts.push_back(match.queryIdx);
-		dstPts.push_back(match.trainIdx);
+		srcPts.push_back(keypoints1.at(match.imgIdx).pt);
+		dstPts.push_back(keypoints2.at(match.trainIdx).pt);
 	}
 
 	cv::Mat mask;
@@ -109,12 +110,12 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 
 
 	//HOMOGRAPHY
-	std::vector<int> srcPts;
-	std::vector<int> dstPts;
+	std::vector<cv::Point2f> srcPts;
+	std::vector<cv::Point2f> dstPts;
 
 	for (cv::DMatch match : matches) {
-		srcPts.push_back(match.queryIdx);
-		dstPts.push_back(match.trainIdx);
+		srcPts.push_back(keypoints1.at(match.imgIdx).pt);
+		dstPts.push_back(keypoints2.at(match.trainIdx).pt);
 	}
 
 	cv::Mat mask;
