@@ -24,23 +24,21 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 	descriptor->compute(img1, keypoints1, descriptor1);
 	descriptor->compute(img2, keypoints2, descriptor2);
 
-	std::vector<cv::DMatch> unprunedMatches;
+	std::vector<std::vector<cv::DMatch>> unprunedMatches;
 	std::vector<int> matchDistances;
 	cv::Ptr<cv::BFMatcher> bf = cv::BFMatcher::create();
-	bf->match(descriptor1, descriptor2, unprunedMatches);
+	bf->knnMatch(descriptor1, descriptor2, unprunedMatches, 2);
 
 	clock_t duration = clock() - start;
 	std::cout << "SIFT Matching took " << duration << std::endl;
 
-	//TODO
-	//std::sort(unprunedMatches.begin(), unprunedMatches.end(), comp);
 	std::cout << "SIFT match distances: " << std::endl;
 	for (int i = 0; i < unprunedMatches.size() - 1; i++) {
-	//	if (unprunedMatches[i].distance*0.8 > unprunedMatches[i + 1].distance) {
-		std::cout << unprunedMatches[i].distance << std::endl;
-		matches.push_back(unprunedMatches[i]);
-		matchDistances.push_back(unprunedMatches[i].distance);
-	//	}
+		if (unprunedMatches[i][0].distance < 0.8 * unprunedMatches[i][1].distance) {
+			std::cout << unprunedMatches[i][0].distance << std::endl;
+			matches.push_back(unprunedMatches[i][0]);
+			matchDistances.push_back(unprunedMatches[i][0].distance);
+		}
 
 	}
 
@@ -56,6 +54,7 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 
 	std::cout << "SIFT: Number of keypoints in image 1: " << keypoints1.size() << std::endl;
 	std::cout << "SIFT: Number of keypoints in image 2: " << keypoints2.size() <<std::endl;
+	std::cout << "SIFT: Number of unpruned matches: " << unprunedMatches.size() << std::endl;
 	std::cout << "SIFT: Number of matches: " << matches.size() << std::endl;
 	
 	//HOMOGRAPHY
@@ -69,7 +68,7 @@ void siftFeatures(cv::Mat img1, cv::Mat img2) {
 
 	clock_t start2 = clock();
 	cv::Mat mask;
-	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 20);
+	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 6);
 	clock_t duration2 = clock() - start2;
 	std::cout << "SIFT Homography took " << duration2 << std::endl;
 	std::cout << "Sift Inliers: " << cv::sum(mask)[0] << std::endl;
@@ -127,20 +126,18 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 	orb->compute(img1, keypoints1, descriptor1);
 	orb->compute(img2, keypoints2, descriptor2);
 
-	std::vector<cv::DMatch> unprunedMatches;
+	std::vector <std::vector<cv::DMatch>> unprunedMatches;
 	std::vector<int> matchDistances;
 	cv::Ptr<cv::BFMatcher> bf = cv::BFMatcher::create();
-	bf->match(descriptor1, descriptor2, unprunedMatches);	
-	//TODO
-	//std::sort(unprunedMatches.begin(), unprunedMatches.end(), comp);
+	bf->knnMatch(descriptor1, descriptor2, unprunedMatches, 2);
+	
 	std::cout << "ORB match distances: " << std::endl;
 	for (int i = 0; i < unprunedMatches.size() - 1; i++) {
-		//	if (unprunedMatches[i].distance*0.8 > unprunedMatches[i + 1].distance) {
-		std::cout << unprunedMatches[i].distance << std::endl;
-		matches.push_back(unprunedMatches[i]);
-		matchDistances.push_back(unprunedMatches[i].distance);
-		//	}
-
+		if (unprunedMatches[i][0].distance < 0.8 * unprunedMatches[i][1].distance) {
+			std::cout << unprunedMatches[i][0].distance << std::endl;
+			matches.push_back(unprunedMatches[i][0]);
+			matchDistances.push_back(unprunedMatches[i][0].distance);
+		}
 	}
 
 	clock_t duration = clock() - start;
@@ -158,6 +155,7 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 
 	std::cout << "ORB: Number of keypoints in image 1: " << keypoints1.size() << std::endl;
 	std::cout << "ORB: Number of keypoints in image 2: " << keypoints2.size() << std::endl;
+	std::cout << "ORB: Number of unpruned matches: " << unprunedMatches.size() << std::endl;
 	std::cout << "ORB: Number of matches: " << matches.size() << std::endl;
 
 
@@ -172,7 +170,7 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 
 	clock_t start2 = clock();
 	cv::Mat mask;
-	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 20);
+	cv::Mat homography = cv::findHomography(srcPts, dstPts, mask, cv::RANSAC, 9);
 	clock_t duration2 = clock() - start2;
 	std::cout << "ORB Homography took " << duration2 << std::endl;
 	std::cout << "Orb Inliers: " << cv::sum(mask)[0] << std::endl;
@@ -214,8 +212,8 @@ void orbFeatures(cv::Mat img1, cv::Mat img2) {
 
 
 int main() {
-	cv::Mat img1 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/indoor-left.jpg", cv::IMREAD_GRAYSCALE);
-	cv::Mat img2 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/indoor-right.jpg", cv::IMREAD_GRAYSCALE);
+	cv::Mat img1 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/volleyball-left.jpg", cv::IMREAD_GRAYSCALE);
+	cv::Mat img2 = cv::imread("C:/Users/tobia/Desktop/Visual_Computing_Project/images/volleyball-right.jpg", cv::IMREAD_GRAYSCALE);
 
 	cv::Mat resizedImg1;
 	cv::resize(img1, resizedImg1, cv::Size(500 * img1.cols / img1.rows, 500));
